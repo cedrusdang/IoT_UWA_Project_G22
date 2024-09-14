@@ -1,0 +1,1 @@
+1. Create a API gateway for GPS data from the ESP32 LORAWAN HUB using HTTP
