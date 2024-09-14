@@ -1,76 +1,54 @@
-#include <iostream>
-#include <string>
-#include <curl/curl.h> 
-#include <nlohmann/json.hpp>
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
 
-using json = nlohmann::json;
+const char* ssid = "your_wifi_ssid";
+const char* password = "your_wifi_password";
+const char*   
+ api_gateway_url = "https://your-api-id.execute-api.your-region.amazonaws.com/your-stage/gps";
 
-// Callback function to handle the response data
-size_t write_callback(void *contents, size_t size, size_t nmemb, std::string *s) {
-    size_t total_size = size * nmemb;
-    s->append((char*)contents, total_size);
-    return total_size;
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");   
+
 }
 
-void send_gps_data(double longitude, double latitude, const std::string& api_gateway_url) {
-    CURL *curl;
-    CURLcode res;
-    std::string read_buffer;
+void loop() {
+  // Get GPS data (replace with your actual GPS reading logic)
+  float latitude = 47.6062; 
+  float longitude = -122.3321;
 
-    curl = curl_easy_init();
-    if (curl) {
-        // Set the URL
-        curl_easy_setopt(curl, CURLOPT_URL, api_gateway_url.c_str());
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(api_gateway_url);
+    http.addHeader("Content-Type", "application/json");
 
-        // Set the request method to POST
-        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+    StaticJsonDocument doc;
+    doc["latitude"] = latitude;
+    doc["longitude"] = longitude;
+    String json_data;
+    serializeJson(doc, json_data);
 
-        // Prepare the JSON data
-        json data;
-        data["longitude"] = longitude;
-        data["latitude"] = latitude;
-        std::string post_data = data.dump();
+    int httpResponseCode = http.POST(json_data);
 
-        // Set the POST data
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.c_str());
-
-        // Set the content type header
-        struct curl_slist *headers = NULL;
-        headers = curl_slist_append(headers, "Content-Type: application/json");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-        // Set the write callback function
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &read_buffer);
-
-        // Perform the request
-        res = curl_easy_perform(curl);
-
-        // Check for errors
-        if (res != CURLE_OK) {
-            std::cerr << "Failed to send GPS data. Error: " << curl_easy_strerror(res) << std::endl;
-        } else {
-            long response_code;
-            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-
-            if (response_code >= 200 && response_code < 300) { // Check for successful status codes
-                std::cout << "GPS data sent successfully!" << std::endl;
-                if (!read_buffer.empty()) {
-                    std::cout << "API Gateway response: " << read_buffer << std::endl;
-                }
-            } else {
-                std::cerr << "Failed to send GPS data. HTTP status code: " << response_code << std::endl;
-            }
-        }
-
-        // Cleanup
-        curl_easy_cleanup(curl);
-        curl_slist_free_all(headers);
+    if (httpResponseCode > 0) {
+      Serial.print("HTTP Response code: ");
+      Serial.println(httpResponseCode);
+      String payload = http.getString();
+      Serial.println(payload);
+    } else {
+      Serial.print("Error code: ");
+      Serial.println(httpResponseCode);
     }
-}
+    http.end();
+  }
 
-int main() {
-    std::string api_gateway_url = "https://fnh2s8vbnl.execute-api.ap-southeast-2.amazonaws.com/receiver"; 
-    send_gps_data(-122.3321, 47.6062, api_gateway_url);
-    return 0;
+  delay(5000);   
+ // Send data every 5 seconds (adjust as needed)
 }
