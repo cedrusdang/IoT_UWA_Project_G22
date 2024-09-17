@@ -1,12 +1,11 @@
 #include "secrets.h"
 #include <WiFiClientSecure.h>
-#include <PubSubClient.h>
-#include <ArduinoJson.h>
+#include <PubSubClient.h> //PubSubClient by Nick (If error, please remove all library)
+#include <ArduinoJson.h> //ArduinoJson by Benoit
 #include "WiFi.h"
- 
 #define AWS_IOT_PUBLISH_TOPIC "hub/pub"
 #define AWS_IOT_SUBSCRIBE_TOPIC "hub/sub"
- 
+
 float lon ;
 float lat;
  
