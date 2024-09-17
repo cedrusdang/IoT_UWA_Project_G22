@@ -1,5 +1,3 @@
-#include <pgmspace.h>
-
 #define SECRET
 #define THINGNAME "hub"
 
