@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Map & Dashboard</title>
+<link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #001f3f; /* Navy background */
+    color: white; /* Text color */
+}
+
+.top-bar {
+    background-color: #003566; /* Darker navy for top bar */
+    padding: 15px; /* Increased padding */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+.top-bar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.top-bar li {
+    margin-right: 30px; /* More spacing between tabs */
+}
+
+.top-bar a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 10px 15px; /* Padding for tabs */
+    border-radius: 5px; /* Rounded corners */
+    transition: background-color 0.3s; /* Smooth hover effect */
+}
+
+.top-bar a:hover {
+    background-color: #005099; /* Lighter navy on hover */
+}
+
+.content {
+    display: flex;
+    height: calc(100vh - 60px); /* Adjust for top bar height */
+}
+
+.map-container {
+    width: 70%;
+    height: 100%;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+.dashboard {
+    width: 30%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    padding: 30px; /* Increased padding */
+}
+
+.box {
+    background-color: #224c7f; /* Lighter navy for boxes */
+    padding: 30px; /* Increased padding */
+    border-radius: 10px; /* More rounded corners */
+    text-align: center;
+    width: 90%; /* Wider boxes */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Stronger shadow */
+}
+</style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <ul>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('analysis') }}">Analysis</a></li>
+            <li><a href="{{ url_for('animal_list') }}">Animal List</a></li>
+            <li><a href="{{ url_for('signin_page') }}">Sign Out</a></li> 
+        </ul>
+    </div>
+
+    <div class="content">
+        <div class="map-container">
+            <div id="map"></div> 
+        </div>
+        <div class="dashboard"> 
+            <div class="box">Number 1</div>
+            <div class="box">Number 2</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <script>
+        const apiKey = ""; // Replace with your actual API key
+        const mapName = "coverage-map";
+        const region = "ap-southeast-2";
+
+        const map = new maplibregl.Map({
+            container: "map",
+            style: `https://maps.geo.${region}.amazonaws.com/maps/v0/maps/${mapName}/style-descriptor?key=${apiKey}`,
+            center: [-123.115898, 49.295868], // You might want to adjust the center coordinates
+            zoom: 11,
+        });
+        map.addControl(new maplibregl.NavigationControl(), "top-left");
+    </script>
+
+</body>
+</html>
