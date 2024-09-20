@@ -1,0 +1,127 @@
+{% extends 'base.html' %} {% block content %}
+<script
+  async
+  src="https://maps.googleapis.com/maps/api/js?key=API_KEY&loading=async&libraries=drawing,geometry&callback=initMap"
+></script>
+<div id="controls">
+  <button id="resetButton">Reset Geofence</button>
+</div>
+<div id="map"></div>
+<script>
+  let map;
+  let drawingManager;
+  let geofencePolygon;
+  let polygons = [];
+
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 40.7128, lng: -74.006 }, // Example center
+      zoom: 12,
+    });
+
+    drawingManager = new google.maps.drawing.DrawingManager({
+      drawingMode: google.maps.drawing.OverlayType.POLYGON,
+      drawingControl: true,
+      drawingControlOptions: {
+        position: google.maps.ControlPosition.TOP_CENTER,
+        drawingModes: ["polygon"],
+      },
+      polygonOptions: {
+        editable: true,
+        draggable: true,
+        fillColor: "#FF0000",
+        fillOpacity: 0.35,
+        strokeColor: "#FF0000",
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+      },
+    });
+    drawingManager.setMap(map);
+
+    google.maps.event.addListener(
+      drawingManager,
+      "overlaycomplete",
+      function (event) {
+        if (event.type === google.maps.drawing.OverlayType.POLYGON) {
+          geofencePolygon = event.overlay;
+          polygons.push(geofencePolygon);
+          // console.log("some");
+          updateGeofenceInfo();
+         
+
+          google.maps.event.addListener(
+            geofencePolygon.getPath(),
+            "set_at",
+            updateGeofenceInfo
+          );
+          google.maps.event.addListener(
+            geofencePolygon.getPath(),
+            "insert_at",
+            updateGeofenceInfo
+          );
+          google.maps.event.addListener(
+            geofencePolygon.getPath(),
+            "remove_at",
+            updateGeofenceInfo
+          );
+          
+          const lat = parseFloat("40.7128");
+          const lng = parseFloat("-74.006");
+          isPointInPolygon(lat, lng);
+
+          // Optionally clear the drawing tools after a polygon is drawn
+          drawingManager.setMap(null);
+        }
+      }
+    );
+
+    // Add event listener for the reset button
+    document
+      .getElementById("resetButton")
+      .addEventListener("click", resetGeofence);
+  }
+
+  function updateGeofenceInfo() {
+    if (!geofencePolygon) {
+      console.log("No geofence polygon defined.");
+      return;
+    }
+    if (!geofencePolygon) return;
+
+    const path = geofencePolygon.getPath();
+    let coordinates = [];
+    for (let i = 0; i < path.getLength(); i++) {
+      coordinates.push(path.getAt(i).toUrlValue(6));
+    }
+    console.log("Geofence Coordinates:", coordinates);
+  }
+
+  function isPointInPolygon(lat, lng) {
+    if (!geofencePolygon) return false;
+
+    const point = new google.maps.LatLng(lat, lng);
+    //console.log(point);
+    
+    //console.log(polygon);
+    const isInside = google.maps.geometry.poly.containsLocation(
+      point,
+      geofencePolygon
+    );
+    console.log("Is point inside geofence:", isInside);
+    return isInside;
+  }
+
+  function resetGeofence() {
+    // Iterate over polygons and set their map property to null
+    for (let i = 0; i < polygons.length; i++) {
+      polygons[i].setMap(null);
+    }
+    polygons = []; // Clear the polygons array
+
+    // Optionally, re-enable the Drawing Manager if it was cleared
+    drawingManager.setMap(map);
+  }
+
+  window.initMap = initMap;
+</script>
+{% endblock %}

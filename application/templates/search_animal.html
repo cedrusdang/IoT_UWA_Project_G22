@@ -1,0 +1,24 @@
+!DOCTYPE html
+html
+head
+    titleSearch Animaltitle
+head
+body
+    h1Search for Animal Informationh1
+    form method=GET action={{ url_for('main_routes.search_animal') }}
+        input type=text name=query placeholder=Enter name or code
+        input type=submit value=Search
+    form
+
+    {% if animals %}
+        h2Search Resultsh2
+        ul
+        {% for animal in animals %}
+            li{{ animal.name }} (Code {{ animal.code }}) - {{ animal.remarks }}li
+        {% endfor %}
+        ul
+    {% else %}
+        pNo results found.p
+    {% endif %}
+body
+html
