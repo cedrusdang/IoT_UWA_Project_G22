@@ -1,19 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../static/css/css.css">
+    <!-- <link rel="stylesheet" href="../static/css/login_styles.css"> -->
 </head>
+
 <body>
-    <h1>Login</h1>
-    <form action="{{ url_for('main_routes.login') }}" method="POST">
-        <label for="username">Username:</label>
-        <input type="text" name="username" required>
-        
-        <label for="password">Password:</label>
-        <input type="password" name="password" required>
-        
-        <input type="submit" value="Login">
-    </form>
-    <a href="{{ url_for('main_routes.register') }}">Don't have an account? Register here</a>
+    <div class="login-page">
+        <form method="post" class="form">
+            <h2>Login</h2>
+
+            <div class="form-info">
+                <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                <input type="text" id="firstname" name="username" placeholder="Username" required>
+            </div>
+            <div class="form-info">
+                <span class="glyphicon glyphicon-lock" aria-hidden="true"></span>
+                <input type="password" name="password" placeholder="Password" required><br>
+            </div>
+            <div class="form-btn">
+                <input type="submit" class="submit-btn" value="Login">
+            </div>
+
+            <div class="form-tips">
+                {% if error_message %}
+                <p class="error">
+                    {% if 'Please register' in error_message %}
+                    No such user. Please <a href="{{ url_for('main_routes.register') }}">Register</a>
+                    {% else %}
+                    {{ error_message }}
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+
+
+
+        </form>
+        <a href="{{ url_for('main_routes.home') }}" class="back-btn">
+            <span class="glyphicon 
+            glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+            Back to Home
+        </a>
+    </div>
+
 </body>
+
 </html>

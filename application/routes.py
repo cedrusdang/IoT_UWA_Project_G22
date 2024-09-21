@@ -18,37 +18,51 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists')
+     
+        user = User.query.filter_by(username=username).first()
+        if user:
+            error_message = 'Username already taken. Please choose another one.'
+            session['error_message'] = error_message
             return redirect(url_for('main_routes.register'))
         
+        
         new_user = User(username=username)
-        new_user.set_password(password)
+        new_user.set_password(password)  
         db.session.add(new_user)
         db.session.commit()
-        flash('Registration successful')
+        
+      
+        session['success_message'] = 'Registration successful. You can now login.'
         return redirect(url_for('main_routes.login'))
     
-    return render_template('register.html')
+    error_message = session.pop('error_message', None)
+    success_message = session.pop('success_message', None)
+    return render_template('register.html', error_message=error_message, success_message=success_message)
+
 
 @main_routes.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        
+        
         user = User.query.filter_by(username=username).first()
         
-        if user is None or not user.check_password(password):
-            flash('Invalid username or password')
-            return redirect(url_for('main_routes.login'))
-        
-        session['user_id'] = user.id
-        session['username'] = user.username
-        flash('Login successful')
-        return redirect(url_for('main_routes.index'))
+        if user and user.check_password(password):  
+            
+            session['user_id'] = user.id
+            session['username'] = user.username
+            return redirect(url_for('main_routes.index'))
+        else:
+            error_message = 'Wrong username or password.'  
+            
+        session['error_message'] = error_message
+        return redirect(url_for('main_routes.login'))
     
-    return render_template('login.html')
+    
+    error_message = session.pop('error_message', None)
+    return render_template('login.html', error_message=error_message)
 
 @main_routes.route('/logout')
 def logout():
