@@ -10,6 +10,23 @@ html, body {
 }
 #map {
     min-height: 400px;
-    height: 100%;
+    height: 100% !important;
     width: 100%;
   }
+
+/* Custom styles for the sidebar */
+@media (max-width: 768px) {
+  #sidebar {
+      position: fixed;
+      top: 0;
+      left: -250px; /* Hide sidebar by default */
+      width: 250px;
+      height: 100%;
+      background-color: #343a40;
+      transition: left 0.3s ease;
+      z-index: 1050; /* Ensure sidebar is above other content */
+  }
+  #sidebar.show {
+      left: 0; /* Show sidebar */
+  }
+}

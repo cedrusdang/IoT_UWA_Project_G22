@@ -1,10 +1,12 @@
 {% extends 'base.html' %} {% block content %}
 <script
   async
-  src="https://maps.googleapis.com/maps/api/js?key=API_KEY&loading=async&libraries=drawing,geometry&callback=initMap"
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCkVDYWK6leViH9msDiR2wvVcn6w9ymyyM&loading=async&libraries=drawing,geometry&callback=initMap"
 ></script>
+
 <div id="controls">
   <button id="resetButton">Reset Geofence</button>
+  <button id="saveButton" disabled>Save Geofence</button> <!-- Save button -->
 </div>
 <div id="map"></div>
 <script>
@@ -17,6 +19,7 @@
     map = new google.maps.Map(document.getElementById("map"), {
       center: { lat: 40.7128, lng: -74.006 }, // Example center
       zoom: 12,
+      mapTypeId: google.maps.MapTypeId.HYBRID, // Satellite view
     });
 
     drawingManager = new google.maps.drawing.DrawingManager({
@@ -45,9 +48,7 @@
         if (event.type === google.maps.drawing.OverlayType.POLYGON) {
           geofencePolygon = event.overlay;
           polygons.push(geofencePolygon);
-          // console.log("some");
           updateGeofenceInfo();
-         
 
           google.maps.event.addListener(
             geofencePolygon.getPath(),
@@ -64,10 +65,13 @@
             "remove_at",
             updateGeofenceInfo
           );
-          
+
           const lat = parseFloat("40.7128");
           const lng = parseFloat("-74.006");
           isPointInPolygon(lat, lng);
+
+          // Enable the save button once a polygon is drawn
+          document.getElementById("saveButton").disabled = false;
 
           // Optionally clear the drawing tools after a polygon is drawn
           drawingManager.setMap(null);
@@ -79,6 +83,9 @@
     document
       .getElementById("resetButton")
       .addEventListener("click", resetGeofence);
+
+    // Add event listener for the save button
+    document.getElementById("saveButton").addEventListener("click", saveGeofence);
   }
 
   function updateGeofenceInfo() {
@@ -86,7 +93,6 @@
       console.log("No geofence polygon defined.");
       return;
     }
-    if (!geofencePolygon) return;
 
     const path = geofencePolygon.getPath();
     let coordinates = [];
@@ -100,9 +106,7 @@
     if (!geofencePolygon) return false;
 
     const point = new google.maps.LatLng(lat, lng);
-    //console.log(point);
-    
-    //console.log(polygon);
+
     const isInside = google.maps.geometry.poly.containsLocation(
       point,
       geofencePolygon
@@ -112,14 +116,41 @@
   }
 
   function resetGeofence() {
-    // Iterate over polygons and set their map property to null
     for (let i = 0; i < polygons.length; i++) {
       polygons[i].setMap(null);
     }
-    polygons = []; // Clear the polygons array
+    polygons = [];
 
-    // Optionally, re-enable the Drawing Manager if it was cleared
     drawingManager.setMap(map);
+
+    // Disable the save button when reset
+    document.getElementById("saveButton").disabled = true;
+  }
+
+  function saveGeofence() {
+    if (!geofencePolygon) return;
+
+    const path = geofencePolygon.getPath();
+    let coordinates = [];
+    for (let i = 0; i < path.getLength(); i++) {
+      coordinates.push(path.getAt(i).toUrlValue(6));
+    }
+
+    // Send coordinates to Flask backend
+    fetch("/save-geofence", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ coordinates: coordinates }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Geofence saved:", data);
+      })
+      .catch((error) => {
+        console.error("Error saving geofence:", error);
+      });
   }
 
   window.initMap = initMap;

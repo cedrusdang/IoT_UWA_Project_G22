@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from models import db, User, Animal
 
 # Create a blueprint for main routes
@@ -70,6 +70,18 @@ def logout():
     session.pop('username', None)
     flash('Logged out successfully')
     return redirect(url_for('main_routes.home'))
+
+@main_routes.route('/save-geofence', methods=['POST'])
+def save_geofence():
+    data = request.get_json()  # Get JSON data from the POST request
+    coordinates = data.get('coordinates')
+    if coordinates:
+        # Save the coordinates as per your needs (e.g., database)
+        print("Received geofence coordinates:", coordinates)
+        # Return a JSON response
+        return jsonify({'message': 'Geofence saved successfully!'}), 200
+    else:
+        return jsonify({'error': 'No coordinates provided'}), 400
 
 
 @main_routes.route('/add_animal', methods=['GET', 'POST'])

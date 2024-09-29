@@ -1,7 +1,7 @@
 {% extends 'base.html' %} 
 {% block content %}
 <script async
-    src="https://maps.googleapis.com/maps/api/js?key=API_KEY&loading=async&libraries=visualization&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCkVDYWK6leViH9msDiR2wvVcn6w9ymyyM&loading=async&libraries=visualization&callback=initMap">
 </script>
 
 <div id="map"></div>
@@ -34,6 +34,7 @@
   map = new google.maps.Map(document.getElementById("map"), {
     center: sanFrancisco,
     zoom: 13,
+    mapTypeId: google.maps.MapTypeId.HYBRID, // Satellite view
     //mapTypeId: "satellite",
   });
 

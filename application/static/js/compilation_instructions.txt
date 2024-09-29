@@ -1,0 +1,2 @@
+Install dependencies
+Command: npx browserify mqtt.js -o mqtt_compiled.js
