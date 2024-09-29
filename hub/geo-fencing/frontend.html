@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo-Fence Management</title>
+</head>
+<body>
+    <h1>Livestock Tracking</h1>
+    <div>
+        <h2>Set Geo-Fence</h2>
+        <form id="geofence-form">
+            <label>Latitude Min: <input type="number" id="latitude_min"></label><br>
+            <label>Latitude Max: <input type="number" id="latitude_max"></label><br>
+            <label>Longitude Min: <input type="number" id="longitude_min"></label><br>
+            <label>Longitude Max: <input type="number" id="longitude_max"></label><br>
+            <button type="submit">Set Geo-Fence</button>
+        </form>
+    </div>
+
+    <div>
+        <h2>Device Location</h2>
+        <button onclick="getDeviceData()">Get Device Data</button>
+        <div id="device-location"></div>
+    </div>
+
+    <script>
+        document.getElementById('geofence-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const latitude_min = document.getElementById('latitude_min').value;
+            const latitude_max = document.getElementById('latitude_max').value;
+            const longitude_min = document.getElementById('longitude_min').value;
+            const longitude_max = document.getElementById('longitude_max').value;
+
+            fetch('/geo-fence', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    latitude_min: latitude_min,
+                    latitude_max: latitude_max,
+                    longitude_min: longitude_min,
+                    longitude_max: longitude_max
+                })
+            })
+            .then(response => response.json())
+            .then(data => alert(data.message));
+        });
+
+        function getDeviceData() {
+            fetch('/get-device-data')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('device-location').innerHTML = `Device Location: Latitude ${data.latitude}, Longitude ${data.longitude}`;
+                });
+        }
+    </script>
+</body>
+</html>
