@@ -6,7 +6,6 @@ from user import admin_ls, user_ls
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16) 
 
-
 @app.route('/signin', methods=['POST'])
 def signin_logic():
     username = request.form['username']

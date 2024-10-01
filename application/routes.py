@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from models import db, User, Animal
+import os
 
 # Create a blueprint for main routes
 main_routes = Blueprint('main_routes', __name__)
@@ -71,26 +72,38 @@ def logout():
     flash('Logged out successfully')
     return redirect(url_for('main_routes.home'))
 
+@main_routes.route('/save-geofence', methods=['POST'])
+def save_geofence():
+    data = request.get_json()  # Get JSON data from the POST request
+    coordinates = data.get('coordinates')
+    if coordinates:
+        # Save the coordinates as per your needs (e.g., database)
+        print("Received geofence coordinates:", coordinates)
+        # Return a JSON response
+        return jsonify({'message': 'Geofence saved successfully!'}), 200
+    else:
+        return jsonify({'error': 'No coordinates provided'}), 400
+
 
 @main_routes.route('/add_animal', methods=['GET', 'POST'])
 def add_animal():
-    if 'user_id' not in session:
-        return redirect(url_for('main_routes.login'))
-
     if request.method == 'POST':
         name = request.form['name']
         code = request.form['code']
-        remarks = request.form['remarks']
+        remarks = request.form.get('remarks', '')
+        
+        if 'user_id' not in session:
+            flash('You must be logged in to add an animal.', 'danger')
+            return redirect(url_for('main_routes.login'))
+        
+        owner_id = session['user_id'] 
 
-        if Animal.query.filter_by(code=code).first():
-            flash('Animal with this code already exists')
-            return redirect(url_for('main_routes.add_animal'))
-
-        new_animal = Animal(name=name, code=code, remarks=remarks)
+        new_animal = Animal(name=name, code=code, remarks=remarks, owner_id=owner_id)
         db.session.add(new_animal)
         db.session.commit()
-        flash('Animal added successfully')
-        return redirect(url_for('main_routes.index'))
+
+        flash('Animal added successfully!', 'success')
+        return redirect(url_for('main_routes.profile'))  
 
     return render_template('add_animal.html')
 
@@ -98,7 +111,10 @@ def add_animal():
 def search_animal():
     query = request.args.get('query', '')
     if query:
-        animals = Animal.query.filter(Animal.name.like(f'%{query}%') | Animal.code.like(f'%{query}%')).all()
+        animals = Animal.query.filter(
+            (Animal.name.like(f'%{query}%')) | 
+            (Animal.code.like(f'%{query}%'))
+        ).all()
     else:
         animals = []
     
@@ -106,6 +122,33 @@ def search_animal():
 
 
 
+@main_routes.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if 'user_id' not in session:
+        return redirect(url_for('main_routes.login'))
+
+    user_id = session['user_id']
+    user = User.query.get(user_id)
+    
+    animals = Animal.query.filter_by(owner_id=user_id).all()
+
+    if request.method == 'POST':
+        if 'password' in request.form:
+            new_password = request.form['password']
+            user.set_password(new_password)
+            db.session.commit()
+            flash('Password updated successfully.')
+        
+        if 'avatar' in request.files:
+            avatar = request.files['avatar']
+            if avatar:
+                avatar_filename = f"{user.id}_avatar.png"
+                avatar.save(os.path.join('static/uploads', avatar_filename))
+                flash('Avatar updated successfully.')
+
+        return redirect(url_for('main_routes.profile'))
+
+    return render_template('profile.html', user=user, animals=animals)
 
 
 # About page route
@@ -127,4 +170,11 @@ def analytics():
 
 @main_routes.route('/animal_list')
 def animal_list():
-    return render_template('animal_list.html')
+    animals = Animal.query.all()  
+    return render_template('animal_list.html', animals=animals)
+
+@main_routes.route('/animal/<int:animal_id>')
+def animal_detail(animal_id):
+    animal = Animal.query.get_or_404(animal_id)  
+    owner = User.query.get(animal.owner_id)  
+    return render_template('animal_detail.html', animal=animal, owner=owner)

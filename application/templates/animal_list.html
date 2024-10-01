@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Animal List{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Animal List</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th scope="col">Animal Name</th>
+                <th scope="col">Animal Code</th>
+                <th scope="col">Remarks</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for animal in animals %}
+            <tr>
+                <td>{{ animal.name }}</td>
+                <td>{{ animal.code }}</td>
+                <td>{{ animal.remarks }}</td>
+                <td>{{ animal.owner.username }}</td> 
+                <td>
+                    <a href="{{ url_for('main_routes.animal_detail', animal_id=animal.id) }}" class="btn btn-primary">View Details</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

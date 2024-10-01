@@ -1,74 +1,65 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/crypto-js/crypto-js.js"></script>
+
 <script async
-    src="https://maps.googleapis.com/maps/api/js?key=API_KEY&loading=async&libraries=visualization&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCkVDYWK6leViH9msDiR2wvVcn6w9ymyyM&loading=async&libraries=visualization&callback=initMap">
 </script>
+
 <div id="map"></div>
-    <script>
-      let map;
-      const livestock = [
-        { id: 1, name: "Cow 1", lat: -31.9723, lng: 115.8125, type: "Cow" },
-        { id: 2, name: "Sheep 1", lat: -31.9744, lng: 115.8199, type: "Sheep" },
-        { id: 3, name: "Cow 2", lat: -31.9799, lng: 115.8144, type: "Cow" },
-      ];
-      const markers = {};
+<script src="{{ url_for('static', filename='js/mqtt_compiled.js') }}"></script>
+<!-- <script>
+  let map;
+  const markers = {};
 
-      function updateMarkers() {
-        livestock.forEach(animal => {
-          if (!markers[animal.id]) {
-            const marker = new google.maps.Marker({
-              position: { lat: animal.lat, lng: animal.lng },
-              map: map,
-              title: animal.name,
-              icon: {
-                url: animal.type === "Cow" 
-                  ? "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-                  : "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
-              },
-            });
-
-            const infoWindow = new google.maps.InfoWindow({
-              content: `<h3>${animal.name}</h3><p>Type: ${animal.type}</p><p>Location: (${animal.lat.toFixed(4)}, ${animal.lng.toFixed(4)})</p>`,
-            });
-
-            marker.addListener("click", () => {
-              infoWindow.open(map, marker);
-            });
-
-            markers[animal.id] = { marker, infoWindow };
-          } else {
-            markers[animal.id].marker.setPosition(new google.maps.LatLng(animal.lat, animal.lng));
-            markers[animal.id].infoWindow.setContent(
-              `<h3>${animal.name}</h3><p>Type: ${animal.type}</p><p>Location: (${animal.lat.toFixed(4)}, ${animal.lng.toFixed(4)})</p>`
-            );
-          }
-        });
-      }
-
-      function simulateRealTimeUpdates() {
-        setInterval(() => {
-          livestock.forEach(animal => {
-            animal.lat += (Math.random() - 0.5) * 0.001;
-            animal.lng += (Math.random() - 0.5) * 0.001;
-          });
-          updateMarkers();
-        }, 3000);
-      }
-
-      function initMap() {
-        map = new google.maps.Map(document.getElementById("map"), {
-          center: { lat: -31.97, lng: 115.81 },
-          
-          zoom: 13,
+  function updateMarkers(livestock) {
+    livestock.forEach(animal => {
+      if (!markers[animal.id]) {
+        const marker = new google.maps.Marker({
+          position: { lat: animal.lat, lng: animal.lng },
+          map: map,
+          title: animal.name,
+          icon: {
+            url: animal.type === "Cow"
+              ? "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+              : "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+          },
         });
 
-        updateMarkers();
-        simulateRealTimeUpdates();
-      }
+        const infoWindow = new google.maps.InfoWindow({
+          content: `<h3>${animal.name}</h3><p>Type: ${animal.type}</p><p>Location: (${animal.lat.toFixed(4)}, ${animal.lng.toFixed(4)})</p>`,
+        });
 
-      initMap();
-      window.initMap = initMap;
-    </script>
+        marker.addListener("click", () => {
+          infoWindow.open(map, marker);
+        });
+
+        markers[animal.id] = { marker, infoWindow };
+      } else {
+        markers[animal.id].marker.setPosition(new google.maps.LatLng(animal.lat, animal.lng));
+        markers[animal.id].infoWindow.setContent(
+          `<h3>${animal.name}</h3><p>Type: ${animal.type}</p><p>Location: (${animal.lat.toFixed(4)}, ${animal.lng.toFixed(4)})</p>`
+        );
+      }
+    });
+  }
+
+  // Initialize Google Maps
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: -31.97, lng: 115.81 },
+      zoom: 13,
+    });
+  }
+
+  // Initialize MQTT client only once
+  document.addEventListener("DOMContentLoaded", function() {
+    initMqtt(updateMarkers);  // Only initialize MQTT once after DOM is ready
+  });
+
+  // Ensure initMap is globally accessible for the Google Maps API callback
+  window.initMap = initMap;
+</script> -->
 
 {% endblock %}
