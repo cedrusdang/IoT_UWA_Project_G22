@@ -139,12 +139,6 @@ def profile():
             db.session.commit()
             flash('Password updated successfully.')
         
-        if 'avatar' in request.files:
-            avatar = request.files['avatar']
-            if avatar:
-                avatar_filename = f"{user.id}_avatar.png"
-                avatar.save(os.path.join('static/uploads', avatar_filename))
-                flash('Avatar updated successfully.')
 
         return redirect(url_for('main_routes.profile'))
 
