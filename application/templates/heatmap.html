@@ -1,4 +1,5 @@
 {% extends 'base.html' %} 
+
 {% block content %}
 <script async
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCkVDYWK6leViH9msDiR2wvVcn6w9ymyyM&loading=async&libraries=visualization&callback=initMap">
@@ -7,43 +8,35 @@
 <div id="map"></div>
 <script>
   let map;
-  // let heatmap;
 
-  // Example: Simulated livestock data points for the heatmap
-  /* Data points defined as a mixture of WeightedLocation and LatLng objects */
-  var heatMapData = [
-    { location: new google.maps.LatLng(37.782, -122.447), weight: 0.5 },
-    new google.maps.LatLng(37.782, -122.445),
-    { location: new google.maps.LatLng(37.782, -122.443), weight: 2 },
-    { location: new google.maps.LatLng(37.782, -122.441), weight: 3 },
-    { location: new google.maps.LatLng(37.782, -122.439), weight: 2 },
-    new google.maps.LatLng(37.782, -122.437),
-    { location: new google.maps.LatLng(37.782, -122.435), weight: 0.5 },
+  function initMap() {
+    // Centered around Perth, WA
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: -31.9523, lng: 115.8613 }, 
+      zoom: 12,
+      mapTypeId: google.maps.MapTypeId.HYBRID, 
+    });
 
-    { location: new google.maps.LatLng(37.785, -122.447), weight: 3 },
-    { location: new google.maps.LatLng(37.785, -122.445), weight: 2 },
-    new google.maps.LatLng(37.785, -122.443),
-    { location: new google.maps.LatLng(37.785, -122.441), weight: 0.5 },
-    new google.maps.LatLng(37.785, -122.439),
-    { location: new google.maps.LatLng(37.785, -122.437), weight: 2 },
-    { location: new google.maps.LatLng(37.785, -122.435), weight: 3 },
-  ];
+    // Example heatmap data (you'll likely replace this with your actual data)
+    var heatMapData = [
+      { location: new google.maps.LatLng(-31.902, 115.887), weight: 0.5 },
+      new google.maps.LatLng(-31.922, 115.845),
+      { location: new google.maps.LatLng(-31.932, 115.893), weight: 2 },
+      { location: new google.maps.LatLng(-31.942, 115.851), weight: 3 },
+      { location: new google.maps.LatLng(-31.912, 115.879), weight: 2 },
+      new google.maps.LatLng(-31.932, 115.837),
+      { location: new google.maps.LatLng(-31.942, 115.865), weight: 0.5 },
+      // ... more data points around Perth
+    ];
 
-  var sanFrancisco = new google.maps.LatLng(37.774546, -122.433523);
+    var heatmap = new google.maps.visualization.HeatmapLayer({
+      data: heatMapData,
+    });
 
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: sanFrancisco,
-    zoom: 13,
-    mapTypeId: google.maps.MapTypeId.HYBRID, // Satellite view
-    //mapTypeId: "satellite",
-  });
+    // Add the heatmap to the map *inside* initMap()
+    heatmap.setMap(map); 
+  }
 
-  var heatmap = new google.maps.visualization.HeatmapLayer({
-    data: heatMapData,
-  });
-  heatmap.setMap(map);
-  // Call initMap when the page loads
-      window.onload = initMap;
+  window.onload = initMap;
 </script>
-
 {% endblock %}

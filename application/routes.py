@@ -6,13 +6,13 @@ import os
 main_routes = Blueprint('main_routes', __name__)
 
 
-@main_routes.route('/')
-def home():
-    return render_template('homepage.html')
+# @main_routes.route('/')
+# def home():
+#     return render_template('homepage.html')
 
 @main_routes.route('/index')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', active_page='home')
 
 @main_routes.route('/register', methods=['GET', 'POST'])
 def register():
@@ -41,7 +41,7 @@ def register():
     return render_template('register.html', error_message=error_message, success_message=success_message)
 
 
-@main_routes.route('/login', methods=['GET', 'POST'])
+@main_routes.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -69,8 +69,8 @@ def login():
 def logout():
     session.pop('user_id', None)
     session.pop('username', None)
-    flash('Logged out successfully')
-    return redirect(url_for('main_routes.home'))
+   # flash('Logged out successfully')
+    return redirect(url_for('main_routes.login'))
 
 @main_routes.route('/save-geofence', methods=['POST'])
 def save_geofence():
@@ -103,9 +103,9 @@ def add_animal():
         db.session.commit()
 
         flash('Animal added successfully!', 'success')
-        return redirect(url_for('main_routes.profile'))  
+        return redirect(url_for('main_routes.animal_list'))  
 
-    return render_template('add_animal.html')
+    return render_template('add_animal.html', active_page='add_animal')
 
 @main_routes.route('/search_animal', methods=['GET'])
 def search_animal():
@@ -118,7 +118,7 @@ def search_animal():
     else:
         animals = []
     
-    return render_template('search_animal.html', animals=animals)
+    return render_template('search_animal.html', animals=animals, active_page='search_animal')
 
 
 
@@ -152,23 +152,34 @@ def about():
 
 @main_routes.route('/heatmap')
 def heatmap():
-    return render_template('heatmap.html')
+    return render_template('heatmap.html', active_page='heatmap')
 
 @main_routes.route('/geofence')
 def geofence():
-    return render_template('geofence.html')
+    return render_template('geofence.html', active_page='geofence')
 
 @main_routes.route('/analytics')
 def analytics():
-    return render_template('analytics.html')
+    return render_template('analytics.html', active_page='analytics')
 
 @main_routes.route('/animal_list')
 def animal_list():
     animals = Animal.query.all()  
-    return render_template('animal_list.html', animals=animals)
+    return render_template('animal_list.html', animals=animals, active_page='animal_list')
 
-@main_routes.route('/animal/<int:animal_id>')
+from flask import jsonify
+
+@main_routes.route('/animal_detail/<int:animal_id>', methods=['GET'])
 def animal_detail(animal_id):
-    animal = Animal.query.get_or_404(animal_id)  
-    owner = User.query.get(animal.owner_id)  
-    return render_template('animal_detail.html', animal=animal, owner=owner)
+    # Query the animal by ID
+    animal = Animal.query.get_or_404(animal_id)
+
+    # Return animal details as JSON
+    return jsonify({
+        'name': animal.name,
+        'code': animal.code,
+        'remarks': animal.remarks,
+        'owner': {
+            'username': animal.owner.username
+        }
+    })
