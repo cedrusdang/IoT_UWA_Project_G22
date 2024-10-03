@@ -37,6 +37,8 @@
                         <li><a href="{{ url_for('main_routes.geofence') }}">Geofence</a></li>
                         <li><a href="{{ url_for('main_routes.analytics') }}">Analytics</a></li>
                         <li><a href="{{ url_for('main_routes.animal_list') }}">Animal List</a></li>
+			<li><a href="{{ url_for('main_routes.add_animal') }}">Add Animal</a></li>
+			<li><a href="{{ url_for('main_routes.search_animal') }}">Search Animal</a></li>
                     </ul>
                     <hr>
                     <div class="dropdown pb-4">
@@ -46,7 +48,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
                             <li><a class="dropdown-item" href="#">Settings</a></li>
-                            <li><a class="dropdown-item" href="#">Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main_routes.profile') }}">Profile</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('main_routes.logout') }}">Sign out</a></li>
                         </ul>

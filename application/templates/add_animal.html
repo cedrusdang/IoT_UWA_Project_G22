@@ -1,21 +1,32 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Animal</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Add Animal{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
     <h1>Add Animal Information</h1>
     <form action="{{ url_for('main_routes.add_animal') }}" method="POST">
-        <label for="name">Animal Name:</label>
-        <input type="text" name="name" required>
+        <div class="mb-3">
+            <label for="name" class="form-label">Animal Name:</label>
+            <input type="text" name="name" class="form-control" required>
+        </div>
         
-        <label for="code">Animal Code:</label>
-        <input type="text" name="code" required>
+        <div class="mb-3">
+            <label for="code" class="form-label">Animal Code:</label>
+            <input type="text" name="code" class="form-control" required>
+        </div>
         
-        <label for="remarks">Remarks:</label>
-        <textarea name="remarks"></textarea>
+        <div class="mb-3">
+            <label for="remarks" class="form-label">Remarks:</label>
+            <textarea name="remarks" class="form-control"></textarea>
+        </div>
         
-        <input type="submit" value="Add Animal">
+        <button type="submit" class="btn btn-primary">Add Animal</button>
     </form>
-</body>
-</html>
+    
+    <br>
+    <a href="{{ url_for('main_routes.index') }}">
+        <button type="button" class="btn btn-secondary">Return to Home</button>
+    </a>
+</div>
+{% endblock %}
