@@ -23,18 +23,18 @@ def connect_to_rds():
         raise e
 
 # insert GPS data into the RDS
-def insert_gps_data(device_id, date, time, speed, longitude, latitude, course, rssi):
+def insert_gps_data(device_id, utc_datetime, speed, longitude, latitude, course, data_type, rssi):
     conn = None
     try:
-        # Connect to RDS MySQL
+        # Connect to RDS MySQL database
         conn = connect_to_rds()
         with conn.cursor() as cursor:
             # SQL query to insert GPS data into the table
             sql = """
-                INSERT INTO gps_data (id, date, time, speed, longitude, latitude, course, rssi)
+                INSERT INTO gps_data (id, utc_datetime, speed, longitude, latitude, course, type, rssi)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(sql, (device_id, date, time, speed, longitude, latitude, course, rssi))
+            cursor.execute(sql, (device_id, utc_datetime, speed, longitude, latitude, course, data_type, rssi))
 
         conn.commit()
         print("GPS data inserted successfully!")
@@ -44,7 +44,7 @@ def insert_gps_data(device_id, date, time, speed, longitude, latitude, course, r
         raise e
     
     finally:
-
+        # closed after use
         if conn:
             conn.close()
             print("RDS connection closed.")

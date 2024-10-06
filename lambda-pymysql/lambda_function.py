@@ -7,28 +7,28 @@ def get_gps_data(event):
         body = json.loads(event['body']) if 'body' in event else {}
 
         # Extract values from the payload
-        device_id = body.get('ID', 0)
-        date = body.get('date', 0)
-        time = body.get('time', 0)
-        speed = body.get('speed', 0)
-        longitude = body.get('Longitude', 0.0)
-        latitude = body.get('Latitude', 0.0)
-        course = body.get('Course', 0)
+         device_id = body.get('ID', 0)
+        utc_datetime = body.get('UTC DateTime', '')
+        speed = body.get('speed', 0.0)
+        longitude = body.get('Lon', 0.0)
+        latitude = body.get('Lat', 0.0)
+        course = body.get('Course', 0.0)
+        data_type = body.get('Type', '')
         rssi = body.get('RSSI', 0)
 
         # Print data
-        print(f"Parsed data - ID: {device_id}, Date: {date}, Time: {time}, Speed: {speed}, "
-              f"Longitude: {longitude}, Latitude: {latitude}, Course: {course}, RSSI: {rssi}")
+        print(f"Parsed data - ID: {device_id}, UTC DateTime: {utc_datetime}, Speed: {speed}, "
+              f"Longitude: {longitude}, Latitude: {latitude}, Course: {course}, Type: {data_type}, RSSI: {rssi}")
 
         # Return parsed data as a dictionary
         return {
-            'device_id': device_id,
-            'date': date,
-            'time': time,
+           'device_id': device_id,
+            'utc_datetime': utc_datetime,
             'speed': speed,
             'longitude': longitude,
             'latitude': latitude,
             'course': course,
+            'data_type': data_type,
             'rssi': rssi
         }
 
@@ -45,23 +45,21 @@ def lambda_handler(event, context):
         #Insert GPS data into the RDS database
         insert_gps_data(
             gps_data['device_id'],
-            gps_data['date'],
-            gps_data['time'],
+            gps_data['utc_datetime'],
             gps_data['speed'],
             gps_data['longitude'],
             gps_data['latitude'],
             gps_data['course'],
+            gps_data['data_type'],
             gps_data['rssi']
         )
 
         return {
-            'statusCode': 200,
             'body': json.dumps('GPS data parsed and inserted successfully!')
         }
 
     except Exception as e:
         print(f"Error processing GPS data: {e}")
         return {
-            'statusCode': 500,
             'body': json.dumps('Failed to process GPS data')
         }
