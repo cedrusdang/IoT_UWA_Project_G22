@@ -18,13 +18,14 @@ let map;
 const markers = {};
 let isMqttInitialized = false;
 let livestock;
+let topic_name ="hub/pub";
 
 // Function to update map markers
 function updateMarkers(livestock) {
   livestock.forEach(animal => {
-    if (!markers[animal.id]) {
+    if (!markers[animal.ID]) {
       const marker = new google.maps.Marker({
-        position: { lat: animal.lat, lng: animal.lng },
+        position: { lat: animal.Lat, lng: animal.Lon },
         map: map,
         title: animal.name,
         icon: {
@@ -35,18 +36,18 @@ function updateMarkers(livestock) {
       });
 
       const infoWindow = new google.maps.InfoWindow({
-        content: `<h3>${animal.name}</h3><p>Type: ${animal.type}</p><p>Location: (${animal.lat.toFixed(4)}, ${animal.lng.toFixed(4)})</p>`,
+        content: `<h3>ID: ${animal.ID}</h3><p>Type: ${animal.Type}</p><p>Speed: ${animal.speed.toFixed(2)}</p><p>Location: (${animal.Lat.toFixed(4)}, ${animal.Lon.toFixed(4)})</p>`,
       });
 
       marker.addListener("click", () => {
         infoWindow.open(map, marker);
       });
 
-      markers[animal.id] = { marker, infoWindow };
+      markers[animal.ID] = { marker, infoWindow };
     } else {
-      markers[animal.id].marker.setPosition(new google.maps.LatLng(animal.lat, animal.lng));
-      markers[animal.id].infoWindow.setContent(
-        `<h3>${animal.name}</h3><p>Type: ${animal.type}</p><p>Location: (${animal.lat.toFixed(4)}, ${animal.lng.toFixed(4)})</p>`
+      markers[animal.ID].marker.setPosition(new google.maps.LatLng(animal.Lat, animal.Lon));
+      markers[animal.ID].infoWindow.setContent(
+        `<h3>${animal.ID}</h3><p>Type: ${animal.Type}</p><p>Location: (${animal.Lat.toFixed(4)}, ${animal.Lon.toFixed(4)})</p>`
       );
     }
   });
@@ -64,7 +65,7 @@ function initMap() {
 }
 mqttClient.on('connect', () => {
     console.log('Connected to AWS IoT');
-    mqttClient.subscribe('livestock', { qos: 1 }, (err, granted) => {
+    mqttClient.subscribe(topic_name, { qos: 1 }, (err, granted) => {
         if (err) {
             console.error('Subscription error:', err);
         } else {
@@ -74,11 +75,22 @@ mqttClient.on('connect', () => {
    // mqttClient.publish('livestock', JSON.stringify({ test_data: 1}));
 });
 mqttClient.on('message', (topic, payload) => {
-    console.log("Message received on topic:", topic);
-    livestock = JSON.parse(payload.toString());
-    //console.log('Message payload:', payload.toString());
-    updateMarkers(livestock);
-  //  onMessageReceived(livestock); 
+  console.log("Message received on topic:", topic);
+  let livestock;
+  
+  try {
+      // Parse the single JSON item from the payload
+      livestock = JSON.parse(payload.toString());
+  } catch (e) {
+      console.error("Failed to parse JSON:", e);
+  }
+
+  // Ensure livestock is wrapped as an array for compatibility with updateMarkers
+  if (!Array.isArray(livestock)) {
+      livestock = [livestock];  // Convert to an array if it's not
+  }
+
+  updateMarkers(livestock);
 });/*
 mqttClient.on('receive', (topic, payload) => {
     console.log("Message received on topic:", topic);
@@ -106,7 +118,7 @@ mqttClient.on('receive', (topic, payload) => {
 // }
 
 // Ensure initMap is globally accessible for the Google Maps API callback
-window.initMap = initMap;
+window.onload = initMap;
 },{"aws-iot-device-sdk":11}],2:[function(require,module,exports){
 (function (process,global){(function (){
 'use strict'
