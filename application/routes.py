@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, make_response
 from models import db, User, Animal
 import os
 
@@ -67,10 +67,17 @@ def login():
 
 @main_routes.route('/logout')
 def logout():
+    # Clear session
     session.pop('user_id', None)
     session.pop('username', None)
-   # flash('Logged out successfully')
-    return redirect(url_for('main_routes.login'))
+    
+    # Prepare the response for redirection
+    response = make_response(redirect(url_for('main_routes.login')))
+    
+    # Delete cookies by setting them with an expiration time in the past
+    response.set_cookie('livestock', '', expires=0)
+    
+    return response
 
 @main_routes.route('/save-geofence', methods=['POST'])
 def save_geofence():
