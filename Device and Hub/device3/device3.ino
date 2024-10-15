@@ -23,7 +23,7 @@ int id = 1;  // Unique identifier for the device
 String type = "Cow";  // Type of device or data
 String data_to_send;  // Data that will be sent to the hub
 int adjust_hour = 8;  // Adjust to Perth time (UTC+8)
-int sleep_duration = 5 * 1000;  // Convert seconds to milliseconds  // Convert minutes to milliseconds (TEST as 1s)
+int sleep_duration = 1 * 1000;  // Convert seconds to milliseconds  // Convert minutes to milliseconds (TEST as 1s)
 int max_retries = 10;  // Set a reasonable retry count for sending data
 bool gps_time_received = false;  // Flag to indicate if GPS time is received
 
@@ -42,10 +42,9 @@ void setup() {
     Serial.println("Starting LoRa failed!");
     while (1);
   }
-
   // GPS Power Mode Configuration - Full Power for initial fix
   ss.println("$PMTK161,0*28");  // Disable standby mode (GPS stays on continuously)
-  ss.println("$PMTK220,5000*1B");  // Set GPS update rate to 0.2Hz (update every 5 seconds to save energy)
+  ss.println("$PMTK220,1000*1F");  // Set GPS update rate to 1Hz (update every second for fast GPS fix)
   Serial.println("Setup complete. Waiting for GPS fix...");
 }
 
@@ -66,7 +65,6 @@ String prepareDataToSend(TinyGPSPlus &gps) {
                 String(type); // Type
   return data;
 }
-
 bool sendDataToHub(String data) {
   int retries = 0;
   while (retries < max_retries) {
@@ -105,7 +103,7 @@ void loop() {
     if (gps.encode(ss.read())) {
       // Check if GPS location is valid (has a fix)
       if (gps.location.isValid() && gps.location.isUpdated() && gps.time.isValid()) {
-        Serial.println("GPS fix acquired!");
+        Serial.println("\nGPS fix acquired!");
         gps_time_received = true;
 
         // Set time directly from GPS (AWST is +0800)
@@ -118,13 +116,12 @@ void loop() {
         // Send data to the hub
         if (sendDataToHub(data_to_send)) {
           Serial.println("Data sent successfully!");
-          ss.println("$PMTK225,2*2E");  // Enable power-saving mode
         } else {
-          Serial.println("Failed to send data");
+          Serial.println("Failed to send data.");
         }
-        delay(sleep_duration); // Sleep for 5 seconds before next transmission
+        delay(sleep_duration); 
       } else {
-        Serial.println("GPS not fixed yet");
+        /Serial.println("GPS not fixed yet."); //For test only
       }
     }
   }
