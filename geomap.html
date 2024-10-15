@@ -1,0 +1,109 @@
+<html>
+<head>
+    <title>Geo-Fencing</title>
+    <style>
+        #map-canvas {
+            height: 400px;
+            width: 700px;
+        }
+        #info {
+            position: absolute;
+            color: red;
+            font-family: Arial;
+            height: 200px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Set up Geo-Fencing</h2>
+    <div id="map-canvas"></div>
+    <h4>Updated Coordinates (X,Y)</h4>
+    <div id="info"></div>
+
+    <!-- 引入Google Maps API -->
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB3M60AZ-l9itFbhsVBWDYMs4tyDENqR2U&libraries=drawing"></script>
+
+    <script>
+        var mapOptions;
+        var map;
+        var coordinates = [];
+        var selectedShape;
+
+        function InitMap() {
+            var location = new google.maps.LatLng(-31.977, 115.816); // 设置初始位置
+            mapOptions = {
+                zoom: 15,
+                center: location,
+                mapTypeId: google.maps.MapTypeId.ROADMAP // 设置地图类型
+            };
+            map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions); // 初始化地图
+
+            var drawingManager = new google.maps.drawing.DrawingManager({
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+                },
+                polygonOptions: {
+                    clickable: true,
+                    editable: true,
+                    fillColor: '#ADFF2F',
+                    fillOpacity: 0.5
+                }
+            });
+
+            drawingManager.setMap(map);
+
+            // 获取多边形的坐标
+            function getPolygonCoords(newShape) {
+                coordinates = [];
+                var len = newShape.getPath().getLength();
+                for (var i = 0; i < len; i++) {
+                    coordinates.push(newShape.getPath().getAt(i).toUrlValue(6));
+                }
+                document.getElementById('info').innerHTML = coordinates.join('<br>');
+            }
+
+            // 完成多边形绘制时获取坐标
+            google.maps.event.addListener(drawingManager, 'polygoncomplete', function (event) {
+                getPolygonCoords(event);
+                google.maps.event.addListener(event.getPath(), 'insert_at', function () {
+                    getPolygonCoords(event);
+                });
+                google.maps.event.addListener(event.getPath(), 'set_at', function () {
+                    getPolygonCoords(event);
+                });
+            });
+
+            // 删除选中的多边形
+            function deleteSelectedShape() {
+                if (selectedShape) {
+                    selectedShape.setMap(null);
+                    selectedShape = null;
+                    document.getElementById('info').innerHTML = "";
+                }
+            }
+
+            // 设置选中的形状
+            function setSelection(shape) {
+                if (selectedShape) {
+                    selectedShape.setEditable(false);
+                }
+                selectedShape = shape;
+                shape.setEditable(true);
+            }
+
+            google.maps.event.addListener(drawingManager, 'overlaycomplete', function (event) {
+                if (event.type === google.maps.drawing.OverlayType.POLYGON) {
+                    setSelection(event.overlay);
+                }
+            });
+        }
+
+        // 初始化地图
+        InitMap();
+    </script>
+</body>
+</html>
+
