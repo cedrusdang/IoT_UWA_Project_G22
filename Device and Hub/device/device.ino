@@ -53,7 +53,7 @@ int id = 1;  // Unique identifier for the device
 String type = "Cow";  // Type of device or data
 String data_to_send;  // Data that will be sent to the hub
 int adjust_hour = 8;  // Adjust to Perth time (UTC+8)
-int sleep_period = 1;  // Sleep period in minutes for LoRa 
+int sleep_period = 0.01;  // Sleep period in minutes for LoRa 
 int sleep_duration = sleep_period * 60 * 1000;  // Convert minutes to milliseconds
 int begin_sleep_at = 18;  // Start sleep time (6 PM)
 int sleep_time = 0;  // Duration of the sleep period in hours
@@ -62,6 +62,19 @@ int max_retries = 10;  // Set a reasonable retry count for sending data
 // Create objects
 TinyGPSPlus gps;
 SoftwareSerial ss(RXPin, TXPin);
+
+// Function to get the number of days in a month
+int daysInMonth(int month, int year) {
+  if (month == 2) { // February
+    // Leap year check: if divisible by 4 and either not divisible by 100 or divisible by 400
+    return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28;
+  }
+  // Months with 30 days: April, June, September, November
+  else if (month == 4 || month == 6 || month == 9 || month == 11) {
+    return 30;
+  }
+  return 31;  // All other months have 31 days
+}
 
 void setup() {
   Serial.begin(115200);
@@ -93,8 +106,34 @@ void setup() {
 }
 
 String prepareDataToSend(TinyGPSPlus &gps) {
-  String utcDateTime = String(gps.date.year()) + "-" + String(gps.date.month()) + "-" + String(gps.date.day()) +
-                       " " + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second());
+  // Adjust the hour to Perth time (UTC + 8)
+  int adjusted_hour = (gps.time.hour() + adjust_hour) % 24;  // Adding +8 hours and handling overflow
+
+  // Handle date change when hour exceeds 24
+  int adjusted_day = gps.date.day();
+  int adjusted_month = gps.date.month();
+  int adjusted_year = gps.date.year();
+
+  // If adjusting the hour moves to the next day
+  if (gps.time.hour() + adjust_hour >= 24) {
+    adjusted_day += 1;
+
+    // Handle month overflow
+    if (adjusted_day > daysInMonth(adjusted_month, adjusted_year)) {
+      adjusted_day = 1;
+      adjusted_month += 1;
+
+      // Handle year overflow
+      if (adjusted_month > 12) {
+        adjusted_month = 1;
+        adjusted_year += 1;
+      }
+    }
+  }
+
+  // Prepare the data to send
+  String utcDateTime = String(adjusted_year) + "-" + String(adjusted_month) + "-" + String(adjusted_day) +
+                       " " + String(adjusted_hour) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second());
   String data = String(security_key) + "," +  // SecKey
                 String(id) + "," +  // ID
                 utcDateTime + "," + // Date and time
@@ -110,6 +149,11 @@ bool sendDataToHub(String data) {
   LoRa.beginPacket();
   LoRa.print(data);
   LoRa.endPacket();
+
+  // Print the data to the console
+  Serial.print("Data sent: ");
+  Serial.println(data);
+
   return true;  // Assume success (simplified)
 }
 
@@ -142,9 +186,38 @@ void loop() {
         delay(sleep_duration); // Sleep before next transmission
       } else {
         // GPS does not have a fix yet
-        Serial.println("GPS not fixed yet. Trying to acquire fix...");
-        delay(1000); // Wait 1 second before checking again
+        Serial.println("GPS not fixed yet.");
+
+        // Send "GPS not fixed" to the hub
+        String notFixedData = String(security_key) + "," +  // SecKey
+                              String(id) + "," +  // ID
+                              "GPS not fixed";  // Message indicating GPS is not fixed
+
+        // Attempt to send "GPS not fixed" message to hub
+        int retryCount = 0;
+        while (retryCount < max_retries) {
+          if (sendDataToHub(notFixedData)) {
+            Serial.println("Sent 'GPS not fixed' successfully!");
+            break;
+          } else {
+            Serial.println("Retrying to send 'GPS not fixed'...");
+            retryCount++;
+            delay(1000);  // Wait 1 second before retrying
+          }
+        }
+
+        // Enter power-saving mode after attempting to send data
+        ss.println("$PMTK225,2*2E"); // Enable power-saving mode (Periodic mode)
+
+        // Delay for the sleep period before trying again
+        delay(sleep_duration);
       }
     }
+  }
+
+  // Check if it's time to enter deep sleep to conserve power
+  if (hour() >= begin_sleep_at || hour() < 6) {
+    Serial.println("Entering deep sleep mode to save power...");
+    ESP.deepSleep(sleep_duration * 1000 * 1000);  // Deep sleep in microseconds
   }
 }
