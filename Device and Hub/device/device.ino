@@ -1,33 +1,3 @@
-/*
-For TTGO T-BEAM ESP32:
-Send GPS data to HUB with local LoRaWAN HUB (Another T-BEAM TTGO)
-Only send data if GPS is fix, if not, it not fix, send "GPS not fixed"
-
-Data Structure:
-list: [security key, id, UTC Date and Time , speed, longitude, latitude, course, type]
-- security_key: This is used to let the hub know that this is our device, default: 13
-- id: Unique identifier for the device
-- UTC Date and Time: The current date and time in UTC, formatted as YYYY-MM-DD HH:MM:SS
-- speed: Current speed in km/h
-- longitude: Longitude coordinate with 6 decimal places
-- latitude: Latitude coordinate with 6 decimal places
-- course: The course or heading in degrees
-- type: The type of data, e.g., "Cow" for livestock tracking
-
-Default:
-This device always has solar panel support to run longer. 
-By default, it will enter deep sleep between 6pm to 6am to save power. Default location for time is WA AUS time.
-GPS is in Low Power Mode. For every {sleep_period} of seconds, it will send data using LoRa to the hub.
-If the transmission is successful, the LoRa module will sleep; if not, it will keep sending data until the sleep period ends.
-LORA band by default for Perth, Australia, without conflict with other networks: 915E6.
-
-Power-Saving Mode:
-Initial GPS Power-Saving Setup:
-- Set this up for update time:
-  ss.println("$PMTK220,60000*1F"); // Update every 60 seconds
-  ss.println("$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28"); // GPS Only
-*/
-
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 #include <LoRa.h>
@@ -53,11 +23,9 @@ int id = 1;  // Unique identifier for the device
 String type = "Cow";  // Type of device or data
 String data_to_send;  // Data that will be sent to the hub
 int adjust_hour = 8;  // Adjust to Perth time (UTC+8)
-int sleep_period = 0.01;  // Sleep period in minutes for LoRa 
-int sleep_duration = sleep_period * 60 * 1000;  // Convert minutes to milliseconds
-int begin_sleep_at = 18;  // Start sleep time (6 PM)
-int sleep_time = 0;  // Duration of the sleep period in hours
+int sleep_duration = 1 * 1000;  // Convert seconds to milliseconds  // Convert minutes to milliseconds (TEST as 1s)
 int max_retries = 10;  // Set a reasonable retry count for sending data
+bool gps_time_received = false;  // Flag to indicate if GPS time is received
 
 // Create objects
 TinyGPSPlus gps;
@@ -89,18 +57,11 @@ void setup() {
   }
 
   // GPS Power Mode Configuration
-  // You can switch between power-saving mode and normal mode for different use cases:
-  // Normal Mode (to acquire GPS fix faster):
-  // ss.println("$PMTK161,0*28");  // Disable standby mode (GPS will be on continuously)
-  // ss.println("$PMTK220,1000*1F");  // Set GPS update rate to 1Hz (update every second for fast GPS fix)
-  //
-  // Power-Saving Mode (for long-term operation):
-  // ss.println("$PMTK225,2*2E");  // Enable periodic power-saving mode to save energy after getting the fix
-  // ss.println("$PMTK220,60000*1F");  // Set GPS update rate to 60 seconds (updates every 60 seconds)
-
-  // Currently using normal mode to acquire GPS fix faster
-  ss.println("$PMTK161,0*28");  // Disable standby mode (GPS stays on)
-  ss.println("$PMTK220,1000*1F");  // Set GPS update rate to 1Hz (updates every second for fast fix)
+  // Normal Mode (to acquire GPS fix faster)
+  ss.println("$PMTK161,0*28");  // Disable standby mode (GPS stays on continuously)
+  ss.println("$PMTK220,1000*1F");  // Set GPS update rate to 1Hz (update every second for fast GPS fix)
+  ss.println("$PMTK300,1000,0,0,0,0*1C"); // Improve fix acquisition time
+  ss.println("$PMTK313,1*2E");  // Enable high sensitivity tracking
 
   Serial.println("Setup complete. Waiting for GPS fix...");
 }
@@ -146,25 +107,54 @@ String prepareDataToSend(TinyGPSPlus &gps) {
 }
 
 bool sendDataToHub(String data) {
-  LoRa.beginPacket();
-  LoRa.print(data);
-  LoRa.endPacket();
+  int retries = 0;
+  while (retries < max_retries) {
+    if (LoRa.beginPacket()) {
+      LoRa.print(data);
+      LoRa.endPacket();
 
-  // Print the data to the console
-  Serial.print("Data sent: ");
-  Serial.println(data);
+      // Print the data to the console
+      Serial.print("Data sent: ");
+      Serial.println(data);
 
-  return true;  // Assume success (simplified)
+      return true;  // Assume success if packet was sent
+    } else {
+      Serial.println("Failed to start LoRa packet. Retrying...");
+      retries++;
+      delay(1000);  // Wait before retrying
+
+      // Reconnect LoRa if disconnected
+      if (!LoRa.begin(BAND)) {
+        Serial.println("Reconnecting LoRa...");
+        LoRa.end();
+        if (!LoRa.begin(BAND)) {
+          Serial.println("LoRa reconnection failed!");
+        } else {
+          Serial.println("LoRa reconnected successfully.");
+        }
+      }
+    }
+  }
+  return false;  // Failed to send after max retries
 }
 
 void loop() {
   // Read GPS data
   while (ss.available() > 0) {
     if (gps.encode(ss.read())) {
+      // Show progress while waiting for GPS fix
+      if (!gps.location.isValid()) {
+        Serial.print(".");
+        
+        delay(500);  // Show progress dot every 500 ms
+      }
+
       // Check if GPS location is valid (has a fix)
       if (gps.location.isValid() && gps.location.isUpdated() && gps.time.isValid()) {
         // GPS has a valid fix
-        Serial.println("GPS fix acquired!");
+        Serial.println("\nGPS fix acquired!");
+        
+        gps_time_received = true;
 
         // Set time directly from GPS (AWST is +0800)
         int adjusted_hour = (gps.time.hour() + adjust_hour) % 24;
@@ -183,41 +173,14 @@ void loop() {
         // Enter power-saving mode after getting a fix
         ss.println("$PMTK225,2*2E"); // Enable power-saving mode (Periodic mode)
 
-        delay(sleep_duration); // Sleep before next transmission
+        delay(sleep_duration); // Sleep for 5 seconds before next transmission
       } else {
         // GPS does not have a fix yet
         Serial.println("GPS not fixed yet.");
 
-        // Send "GPS not fixed" to the hub
-        String notFixedData = String(security_key) + "," +  // SecKey
-                              String(id) + "," +  // ID
-                              "GPS not fixed";  // Message indicating GPS is not fixed
-
-        // Attempt to send "GPS not fixed" message to hub
-        int retryCount = 0;
-        while (retryCount < max_retries) {
-          if (sendDataToHub(notFixedData)) {
-            Serial.println("Sent 'GPS not fixed' successfully!");
-            break;
-          } else {
-            Serial.println("Retrying to send 'GPS not fixed'...");
-            retryCount++;
-            delay(1000);  // Wait 1 second before retrying
-          }
-        }
-
-        // Enter power-saving mode after attempting to send data
-        ss.println("$PMTK225,2*2E"); // Enable power-saving mode (Periodic mode)
-
         // Delay for the sleep period before trying again
-        delay(sleep_duration);
+        delay(5000);
       }
     }
-  }
-
-  // Check if it's time to enter deep sleep to conserve power
-  if (hour() >= begin_sleep_at || hour() < 6) {
-    Serial.println("Entering deep sleep mode to save power...");
-    ESP.deepSleep(sleep_duration * 1000 * 1000);  // Deep sleep in microseconds
   }
 }
