@@ -6,11 +6,11 @@ const awsIot = require('aws-iot-device-sdk');
   const mqttClient = awsIot.device({
     region: 'ap-southeast-2',
     host: 'a2hoy94astii3x-ats.iot.ap-southeast-2.amazonaws.com',  // Get this from the AWS IoT console
-    clientId: "hub2",
+    clientId: clientId,
     protocol: 'wss',  // WebSocket Secure protocol
-    accessKeyId: 'AKIA5V6I66FGFEWPKXSJ',
-    secretKey: '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',
-   // keepalive: '30'
+    accessKeyId: 'AKIA5V6I66FGB7YZAFAD',
+    secretKey: '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',
+    keepalive: 30
     
   });
 
