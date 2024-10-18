@@ -5,362 +5,217 @@
 ></script>
 
 <div id="controls" class="mb-2">
-  <button class="btn btn-primary" id="resetButton">Reset Geofence</button>
-  <button class="btn btn-success" id="saveButton" disabled>Save Geofence</button> <!-- Save button -->
+  <button class="btn btn-primary" id="resetButton">Reset Geofence</button> 
+  <button class="btn btn-success" id="saveButton" disabled>Save Geofence</button> 
 </div>
-<div id="map"></div>
-<!--<script>
-  let map;
-  let drawingManager;
-  let geofencePolygon;
-  let polygons = [];
+<div id="map"></div> <!-- Div element to display the Google Map -->
 
-  function initMap() {
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 40.7128, lng: -74.006 }, // Example center
-      zoom: 12,
-      mapTypeId: google.maps.MapTypeId.HYBRID, // Satellite view
-    });
-
-    drawingManager = new google.maps.drawing.DrawingManager({
-      drawingMode: google.maps.drawing.OverlayType.POLYGON,
-      drawingControl: true,
-      drawingControlOptions: {
-        position: google.maps.ControlPosition.TOP_CENTER,
-        drawingModes: ["polygon"],
-      },
-      polygonOptions: {
-        editable: true,
-        draggable: true,
-        fillColor: "#FF0000",
-        fillOpacity: 0.35,
-        strokeColor: "#FF0000",
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-      },
-    });
-    drawingManager.setMap(map);
-
-    google.maps.event.addListener(
-      drawingManager,
-      "overlaycomplete",
-      function (event) {
-        if (event.type === google.maps.drawing.OverlayType.POLYGON) {
-          geofencePolygon = event.overlay;
-          polygons.push(geofencePolygon);
-          updateGeofenceInfo();
-
-          google.maps.event.addListener(
-            geofencePolygon.getPath(),
-            "set_at",
-            updateGeofenceInfo
-          );
-          google.maps.event.addListener(
-            geofencePolygon.getPath(),
-            "insert_at",
-            updateGeofenceInfo
-          );
-          google.maps.event.addListener(
-            geofencePolygon.getPath(),
-            "remove_at",
-            updateGeofenceInfo
-          );
-
-          const lat = parseFloat("40.7128");
-          const lng = parseFloat("-74.006");
-          isPointInPolygon(lat, lng);
-
-          // Enable the save button once a polygon is drawn
-          document.getElementById("saveButton").disabled = false;
-
-          // Optionally clear the drawing tools after a polygon is drawn
-          drawingManager.setMap(null);
-        }
-      }
-    );
-
-    // Add event listener for the reset button
-    document
-      .getElementById("resetButton")
-      .addEventListener("click", resetGeofence);
-
-    // Add event listener for the save button
-    document.getElementById("saveButton").addEventListener("click", saveGeofence);
-  }
-
-  function updateGeofenceInfo() {
-    if (!geofencePolygon) {
-      console.log("No geofence polygon defined.");
-      return;
-    }
-
-    const path = geofencePolygon.getPath();
-    let coordinates = [];
-    for (let i = 0; i < path.getLength(); i++) {
-      coordinates.push(path.getAt(i).toUrlValue(6));
-    }
-    console.log("Geofence Coordinates:", coordinates);
-  }
-
-  function isPointInPolygon(lat, lng) {
-    if (!geofencePolygon) return false;
-
-    const point = new google.maps.LatLng(lat, lng);
-
-    const isInside = google.maps.geometry.poly.containsLocation(
-      point,
-      geofencePolygon
-    );
-    console.log("Is point inside geofence:", isInside);
-    return isInside;
-  }
-
-  function resetGeofence() {
-    for (let i = 0; i < polygons.length; i++) {
-      polygons[i].setMap(null);
-    }
-    polygons = [];
-
-    drawingManager.setMap(map);
-
-    // Disable the save button when reset
-    document.getElementById("saveButton").disabled = true;
-  }
-
-  function saveGeofence() {
-    if (!geofencePolygon) return;
-
-    const path = geofencePolygon.getPath();
-    let coordinates = [];
-    for (let i = 0; i < path.getLength(); i++) {
-      coordinates.push(path.getAt(i).toUrlValue(6));
-    }
-
-    // Send coordinates to Flask backend
-    fetch("/save-geofence", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ coordinates: coordinates }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Geofence saved:", data);
-      })
-      .catch((error) => {
-        console.error("Error saving geofence:", error);
-      });
-  }
-
-  window.initMap = initMap;
-</script>-->
 <script>
-  let map;
-  let drawingManager;
-  let geofencePolygon;
-  let polygons = [];
+  let map;  
+  let drawingManager;  
+  let geofencePolygon;  
+  let polygons = []; 
 
-  function setCookie(name, value, days) {
-    let expires = "";
-    if (days) {
-      const date = new Date();
-      date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-      expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/";
-  }
-
-  function getCookie(name) {
-    let nameEQ = name + "=";
-    let ca = document.cookie.split(";");
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) == " ") c = c.substring(1, c.length);
-      if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-  }
-
-  function eraseCookie(name) {
-    document.cookie = name + "=; Max-Age=-99999999;";
-  }
-
+  /**
+   * Initializes the Google Map and sets up the Drawing Manager for polygon creation.
+   */
   function initMap() {
+    // Create a new Google Map centered at specified coordinates
     map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: -31.97, lng: 115.81 },
-      zoom: 13,
-      mapTypeId: google.maps.MapTypeId.HYBRID, // Satellite view
+        center: { lat: -31.97, lng: 115.81 }, // Initial center of the map
+        zoom: 13,  // Initial zoom level
+        mapTypeId: google.maps.MapTypeId.HYBRID, // Hybrid map type (satellite and street)
     });
 
+    // Set up the Drawing Manager for creating polygons
     drawingManager = new google.maps.drawing.DrawingManager({
-      drawingMode: google.maps.drawing.OverlayType.POLYGON,
-      drawingControl: true,
-      drawingControlOptions: {
-        position: google.maps.ControlPosition.TOP_CENTER,
-        drawingModes: ["polygon"],
-      },
-      polygonOptions: {
-        editable: true,
-        draggable: true,
-        fillColor: "#FF0000",
-        fillOpacity: 0.35,
-        strokeColor: "#FF0000",
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-      },
+        drawingMode: google.maps.drawing.OverlayType.POLYGON, // Enable polygon drawing mode
+        drawingControl: true,  // Show the drawing control
+        drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER, // Control position on the map
+            drawingModes: ["polygon"], // Allow only polygon drawing
+        },
+        polygonOptions: {
+            editable: true, // Allow editing of the polygon
+            draggable: true, // Allow dragging of the polygon
+            fillColor: "#FF0000", // Fill color for the polygon
+            fillOpacity: 0.35, // Fill opacity
+            strokeColor: "#FF0000", // Stroke color for the polygon outline
+            strokeOpacity: 0.8, // Stroke opacity
+            strokeWeight: 2, // Stroke weight
+        },
     });
-    drawingManager.setMap(map);
+    drawingManager.setMap(map); // Set the drawing manager on the map
 
-    // Check if coordinates exist in the cookie and load the geofence
-    const savedCoordinates = getCookie("geofenceCoordinates");
-    if (savedCoordinates) {
-      const coordinates = JSON.parse(savedCoordinates);
-      loadGeofenceFromCoordinates(coordinates);
-    }
+    // Fetch the saved geofence from the backend
+    fetch("/get-geofence")
+        .then(response => response.json())
+        .then(data => {
+            if (data.coordinates) {
+                const coordinates = JSON.parse(data.coordinates); // Parse the coordinates
+                loadGeofenceFromCoordinates(coordinates); // Load the geofence from fetched coordinates
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching geofence:", error); // Log any errors during fetch
+        });
 
-    google.maps.event.addListener(
-      drawingManager,
-      "overlaycomplete",
-      function (event) {
+    // Event listener for when a polygon is drawn
+    google.maps.event.addListener(drawingManager, "overlaycomplete", function (event) {
         if (event.type === google.maps.drawing.OverlayType.POLYGON) {
-          geofencePolygon = event.overlay;
-          polygons.push(geofencePolygon);
-          updateGeofenceInfo();
+            geofencePolygon = event.overlay; // Store the drawn polygon
+            polygons.push(geofencePolygon); // Add it to the polygons array
+            updateGeofenceInfo(); // Update geofence info
 
-          google.maps.event.addListener(
-            geofencePolygon.getPath(),
-            "set_at",
-            updateGeofenceInfo
-          );
-          google.maps.event.addListener(
-            geofencePolygon.getPath(),
-            "insert_at",
-            updateGeofenceInfo
-          );
-          google.maps.event.addListener(
-            geofencePolygon.getPath(),
-            "remove_at",
-            updateGeofenceInfo
-          );
+            // Add listeners to update info on path change
+            google.maps.event.addListener(geofencePolygon.getPath(), "set_at", updateGeofenceInfo);
+            google.maps.event.addListener(geofencePolygon.getPath(), "insert_at", updateGeofenceInfo);
+            google.maps.event.addListener(geofencePolygon.getPath(), "remove_at", updateGeofenceInfo);
 
-          const lat = parseFloat("40.7128");
-          const lng = parseFloat("-74.006");
-          isPointInPolygon(lat, lng);
-
-          // Enable the save button once a polygon is drawn
-          document.getElementById("saveButton").disabled = false;
-
-          // Optionally clear the drawing tools after a polygon is drawn
-          drawingManager.setMap(null);
+            document.getElementById("saveButton").disabled = false; // Enable the save button
+            drawingManager.setMap(null); // Disable drawing mode after completion
         }
-      }
-    );
+    });
 
-    // Add event listener for the reset button
-    document
-      .getElementById("resetButton")
-      .addEventListener("click", resetGeofence);
-
-    // Add event listener for the save button
+    // Add event listeners for the reset and save buttons
+    document.getElementById("resetButton").addEventListener("click", resetGeofence);
     document.getElementById("saveButton").addEventListener("click", saveGeofence);
   }
 
+  /**
+   * Updates geofence information in the console.
+   */
   function updateGeofenceInfo() {
     if (!geofencePolygon) {
-      console.log("No geofence polygon defined.");
+      console.log("No geofence polygon defined."); // Log if no polygon is defined
       return;
     }
 
-    const path = geofencePolygon.getPath();
+    const path = geofencePolygon.getPath(); // Get the path of the polygon
     let coordinates = [];
     for (let i = 0; i < path.getLength(); i++) {
-      coordinates.push(path.getAt(i).toUrlValue(6));
+      coordinates.push(path.getAt(i).toUrlValue(6)); // Store each coordinate with precision
     }
-    console.log("Geofence Coordinates:", coordinates);
+    console.log("Geofence Coordinates:", coordinates); // Log the coordinates of the geofence
   }
 
+  /**
+   * Checks if a given point is inside the current geofence polygon.
+   * 
+   * @param {number} lat - Latitude of the point to check.
+   * @param {number} lng - Longitude of the point to check.
+   * @returns {boolean} - True if the point is inside the polygon, false otherwise.
+   */
   function isPointInPolygon(lat, lng) {
-    if (!geofencePolygon) return false;
+    if (!geofencePolygon) return false; // Return false if no polygon is defined
 
-    const point = new google.maps.LatLng(lat, lng);
+    const point = new google.maps.LatLng(lat, lng); // Create a LatLng object for the point
 
+    // Check if the point is inside the geofence polygon
     const isInside = google.maps.geometry.poly.containsLocation(
       point,
       geofencePolygon
     );
-    console.log("Is point inside geofence:", isInside);
-    return isInside;
+    console.log("Is point inside geofence:", isInside); // Log the result
+    return isInside; // Return the result
   }
 
+  /**
+   * Resets the geofence, removing all drawn polygons from the map and disabling the save button.
+   */
   function resetGeofence() {
+    // Remove all polygons from the map
     for (let i = 0; i < polygons.length; i++) {
-      polygons[i].setMap(null);
+        polygons[i].setMap(null);
     }
-    polygons = [];
+    polygons = []; // Clear the polygons array
 
-    drawingManager.setMap(map);
+    drawingManager.setMap(map); // Re-enable the drawing manager
 
     // Disable the save button when reset
     document.getElementById("saveButton").disabled = true;
 
-    // Erase the saved geofence cookie
-    eraseCookie("geofenceCoordinates");
+    // Erase the saved geofence in the database
+    fetch("/reset-geofence", {
+        method: "POST", // Make a POST request to reset the geofence in the backend
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        console.log("Geofence reset:", data); // Log the result of the reset
+    })
+    .catch((error) => {
+        console.error("Error resetting geofence:", error); // Log any errors during reset
+    });
   }
 
+  /**
+   * Saves the current geofence polygon to the server.
+   */
   function saveGeofence() {
-    if (!geofencePolygon) return;
+    if (!geofencePolygon) return; // Return if no polygon is defined
 
-    const path = geofencePolygon.getPath();
+    const path = geofencePolygon.getPath(); // Get the path of the polygon
     let coordinates = [];
     for (let i = 0; i < path.getLength(); i++) {
-      coordinates.push(path.getAt(i).toUrlValue(6));
+        coordinates.push(path.getAt(i).toUrlValue(6)); // Store each coordinate with precision
     }
 
-    // Save coordinates in a cookie
-    setCookie("geofenceCoordinates", JSON.stringify(coordinates), 7);
-
-    // Optionally, send coordinates to Flask backend
-    fetch("/save-geofence", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ coordinates: coordinates }),
+    // Send the coordinates to the server to save the geofence
+    fetch('/save-geofence', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ coordinates: coordinates }), // Send coordinates as JSON
     })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Geofence saved:", data);
-      })
-      .catch((error) => {
-        console.error("Error saving geofence:", error);
-      });
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok'); // Throw an error if response is not ok
+        }
+        return response.json(); // Parse JSON response
+    })
+    .then((data) => {
+        console.log('Geofence saved:', data); // Log the result of saving the geofence
+    })
+    .catch((error) => {
+        console.error('Error saving geofence:', error); // Log any errors during save
+    });
   }
 
+  /**
+   * Loads the geofence polygon from coordinates and displays it on the map.
+   * 
+   * @param {Array} coordinates - Array of coordinate strings to create the polygon.
+   */
   function loadGeofenceFromCoordinates(coordinates) {
+    // Convert coordinate strings into objects with latitude and longitude
     const polygonCoords = coordinates.map((coord) => {
       const [lat, lng] = coord.split(",");
       return { lat: parseFloat(lat), lng: parseFloat(lng) };
     });
 
+    // Create a new polygon with the loaded coordinates
     geofencePolygon = new google.maps.Polygon({
       paths: polygonCoords,
-      editable: true,
-      draggable: true,
-      fillColor: "#FF0000",
-      fillOpacity: 0.35,
-      strokeColor: "#FF0000",
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
+      editable: true, // Allow editing of the polygon
+      draggable: true, // Allow dragging of the polygon
+      fillColor: "#FF0000", // Fill color for the polygon
+      fillOpacity: 0.35, // Fill opacity
+      strokeColor: "#FF0000", // Stroke color for the polygon outline
+      strokeOpacity: 0.8, // Stroke opacity
+      strokeWeight: 2, // Stroke weight
     });
-    geofencePolygon.setMap(map);
-    polygons.push(geofencePolygon);
+    geofencePolygon.setMap(map); // Set the polygon on the map
+    polygons.push(geofencePolygon); // Add to polygons array
 
     // Enable the save button after loading the polygon
     document.getElementById("saveButton").disabled = false;
   }
 
+  // Expose the initMap function globally for Google Maps API callback
   window.initMap = initMap;
 </script>
-
 {% endblock %}
