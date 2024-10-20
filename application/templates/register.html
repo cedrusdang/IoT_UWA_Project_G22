@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <!-- <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../static/css/css.css"> -->
+    <!-- <link rel="stylesheet" href="../static/css/register_styles.css"> -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/quartz/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+
+<body class="bg-dark">
+    <div class="container">
+        <div class="row md-min-vh-100 align-items-md-center py-3">
+            <div class="col-md-6">
+                <h1>Welcome to Real Time Livestock Tracking</h1>
+                <p>Your one-stop solution for tracking livestock in real time.</p>
+                <p>Efficiently manage and monitor your livestock with our easy-to-use platform.</p>
+
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 card border-secondary">
+
+                    <form method="post" class="form">
+                        <h2>Register</h2>
+                        <!-- <input type="text" name="username" placeholder="Username" required><br>
+                        <input type="password" name="password" placeholder="Password" required><br>
+                        <button type="submit">Register</button> -->
+                        <div class="form-info">
+                            <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                            <input class="form-control" type="text" id="firstname" name="username" placeholder="Username" required>
+                        </div>
+                        <div class="form-info mt-1">
+                            <span class="glyphicon glyphicon-lock" aria-hidden="true"></span>
+                            <input class="form-control" type="password" name="password" placeholder="Password" required><br>
+                        </div>
+                        <div class="form-btn">
+                            <input type="submit" class="btn btn-primary" value="Submit">
+                        </div>
+                        <div class="form-tips">
+                            <div class="error-container">
+                                {% if error_message %}
+                                <p class="error">{{ error_message }}</p>
+                                {% endif %}
+                            </div>
+                            {% with messages = get_flashed_messages() %}
+                            {% if messages %}
+                            <ul>
+                                {% for message in messages %}
+                                <li>{{ message }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+            
+                    </form>
+            
+            
+            
+            
+                    <a href="{{ url_for('main_routes.login') }}" class="text-decoration-underline mt-3">
+                        <span aria-hidden="true"></span>
+                        Already registered? Click here to login
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+    
+
+</body>
+<body>
+    
+
+</body>
+
+</html>

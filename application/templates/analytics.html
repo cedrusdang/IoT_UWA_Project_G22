@@ -1,0 +1,159 @@
+{% extends 'base.html' %}  <!-- Extends a base template to inherit common HTML structure -->
+
+{% block content %}
+<!-- Load the Plotly library for creating interactive charts -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<!-- Heading for the livestock speed chart -->
+<h1>Livestock Speed</h1>
+
+<!-- Div container for the Plotly chart -->
+<div id="speedChart"></div>
+
+<script>
+    /**
+     * Function to read a specific cookie by name and parse its value.
+     * 
+     * @param {string} name - The name of the cookie to read.
+     * @returns {object|null} - Returns parsed cookie value or null if not found.
+     */
+    function getCookie(name) {
+        let cookieArr = document.cookie.split(";");  // Split the cookie string into individual cookies
+        for (let i = 0; i < cookieArr.length; i++) {
+            let cookiePair = cookieArr[i].split("=");  // Split each cookie into key and value
+            if (name === cookiePair[0].trim()) {
+                return JSON.parse(decodeURIComponent(cookiePair[1]));  // Decode and parse the cookie value
+            }
+        }
+        return null;  // Return null if the cookie is not found
+    }
+
+    /**
+     * Helper function to add small random jitter to x-values.
+     * This is used to prevent overlap of data points on the chart.
+     * 
+     * @param {number} baseX - The base x-value.
+     * @param {number} jitterAmount - The amount of jitter to apply (default: 0.1).
+     * @returns {number} - The jittered x-value.
+     */
+    function addJitter(baseX, jitterAmount = 0.1) {
+        return baseX + (Math.random() * jitterAmount - jitterAmount / 2);
+    }
+
+    // Generate x-values with slight jitter for each animal type
+    const getXValues = (animalType, count) => Array.from({ length: count }, () => addJitter(types.indexOf(animalType) + 1));
+
+    // Define animal types in the order they should appear on the X-axis
+    const types = ['Cow', 'Sheep', 'Goat', 'Horse', 'Others'];
+
+    // Get the livestock data from the cookie
+    const livestockData = getCookie('livestock');
+
+    // If no cookie data found, initialize an empty array
+    if (!livestockData) {
+        console.error("No 'livestock' cookie found.");  // Log an error if cookie data is missing
+    } else {
+        // Create scatter traces for each animal type
+        const traceCows = {
+            x: getXValues('Cow', livestockData.filter(animal => animal.Type === 'Cow').length),  // x-values with jitter
+            y: livestockData.filter(animal => animal.Type === 'Cow').map(animal => animal.speed),  // y-values (speeds)
+            mode: 'markers',  // Scatter mode
+            name: 'Cows',  // Trace name
+            marker: {
+                color: 'rgb(164, 194, 244)',  // Marker color for cows
+                size: 12,  // Marker size
+                line: {
+                    color: 'white',  // Line color for marker border
+                    width: 0.5  // Line width for marker border
+                }
+            },
+            text: livestockData.filter(animal => animal.Type === 'Cow').map(animal => animal.ID + ' (' + animal.speed + ' km/h)'),  // Hover text
+            hoverinfo: 'text',  // Show hover info as text
+            type: 'scatter'  // Define as scatter trace
+        };
+
+        // Repeat similar structure for other animal types (Sheep, Goats, Horses, Others)
+        const traceSheep = {
+            x: getXValues('Sheep', livestockData.filter(animal => animal.Type === 'Sheep').length),
+            y: livestockData.filter(animal => animal.Type === 'Sheep').map(animal => animal.speed),
+            mode: 'markers',
+            name: 'Sheep',
+            marker: {
+                color: 'rgb(255, 217, 102)',
+                size: 12
+            },
+            text: livestockData.filter(animal => animal.Type === 'Sheep').map(animal => animal.ID + ' (' + animal.speed + ' km/h)'),
+            hoverinfo: 'text',
+            type: 'scatter'
+        };
+
+        const traceGoats = {
+            x: getXValues('Goat', livestockData.filter(animal => animal.Type === 'Goat').length),
+            y: livestockData.filter(animal => animal.Type === 'Goat').map(animal => animal.speed),
+            mode: 'markers',
+            name: 'Goats',
+            marker: {
+                color: 'rgb(234, 153, 153)',
+                size: 12
+            },
+            text: livestockData.filter(animal => animal.Type === 'Goat').map(animal => animal.ID + ' (' + animal.speed + ' km/h)'),
+            hoverinfo: 'text',
+            type: 'scatter'
+        };
+
+        const traceHorses = {
+            x: getXValues('Horse', livestockData.filter(animal => animal.Type === 'Horse').length),
+            y: livestockData.filter(animal => animal.Type === 'Horse').map(animal => animal.speed),
+            mode: 'markers',
+            name: 'Horses',
+            marker: {
+                color: 'rgb(142, 124, 195)',
+                size: 12
+            },
+            text: livestockData.filter(animal => animal.Type === 'Horse').map(animal => animal.ID + ' (' + animal.speed + ' km/h)'),
+            hoverinfo: 'text',
+            type: 'scatter'
+        };
+
+        // 'Others' category for animals not fitting into predefined types
+        const traceOthers = {
+            x: getXValues('Others', livestockData.filter(animal => !['Cow', 'Sheep', 'Goat', 'Horse'].includes(animal.Type)).length),
+            y: livestockData.filter(animal => !['Cow', 'Sheep', 'Goat', 'Horse'].includes(animal.Type)).map(animal => animal.speed),
+            mode: 'markers',
+            name: 'Others',
+            marker: {
+                color: 'rgb(128, 128, 128)',
+                size: 12
+            },
+            text: livestockData.filter(animal => !['Cow', 'Sheep', 'Goat', 'Horse'].includes(animal.Type)).map(animal => animal.ID + ' (' + animal.speed + ' km/h)'),
+            hoverinfo: 'text',
+            type: 'scatter'
+        };
+
+        // Combine traces into a data array for plotting
+        const data = [traceCows, traceSheep, traceGoats, traceHorses, traceOthers];
+
+        // Layout configuration for the plot
+        const layout = {
+            title: 'Livestock Speed by Type',  // Title of the chart
+            xaxis: {
+                title: 'Animal Type',  // Title for the x-axis
+                showgrid: false,  // Hide grid lines
+                zeroline: false,  // Hide zero line
+                tickvals: [1, 2, 3, 4, 5], // Positions of types on x-axis
+                ticktext: ['Cows', 'Sheep', 'Goats', 'Horses', 'Others'], // Displayed labels for animal types
+                range: [0.5, 5.5] // Set x-axis range to accommodate jittered points
+            },
+            yaxis: {
+                title: 'Speed (km/h)',  // Title for the y-axis
+                showline: false,  // Hide axis line
+                range: [0, 70] // Set the range of y-axis based on expected max speed
+            }
+        };
+
+        // Render the plot with the specified data and layout
+        Plotly.newPlot('speedChart', data, layout);
+    }
+</script>
+
+{% endblock %}

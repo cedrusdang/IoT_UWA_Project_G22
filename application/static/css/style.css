@@ -1,0 +1,50 @@
+html, body {
+  font-family: "Poppins", sans-serif;
+  scroll-behavior: smooth;
+  --bs-dark-rgb: 0, 23, 31;
+ background-image: none;
+}
+
+.montserrat-100 {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 100;
+  font-style: normal;
+}
+#map {
+    min-height: 400px;
+    height: 100% !important;
+    width: 100%;
+  }
+a{
+  text-decoration: none;
+}
+#sidebar {
+  box-shadow:  4px 4px 8px rgba(0, 0, 0, 0.5);
+}
+.table>:not(caption)>*>*{
+  background-color: var(--bs-dark-rgb);
+}
+@media(min-width:768px){
+  .md-min-vh-100{
+    min-height: 100vh;
+
+  }
+}
+/* Custom styles for the sidebar */
+@media (max-width: 768px) {
+  #sidebar {
+      position: fixed;
+      top: 0;
+      left: -250px; /* Hide sidebar by default */
+      width: 250px;
+      height: 100%;
+      
+      background-color: #343a40;
+      transition: left 0.3s ease;
+      z-index: 1050; /* Ensure sidebar is above other content */
+  }
+  #sidebar.show {
+      left: 0; /* Show sidebar */
+  }
+}

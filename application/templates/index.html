@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCkVDYWK6leViH9msDiR2wvVcn6w9ymyyM&loading=async&libraries=visualization&callback=initMap">
+</script>
+
+<div id="map" class="text-dark"></div>
+<script src="{{ url_for('static', filename='js/mqtt_compiled.js') }}"></script>
+{% endblock %}

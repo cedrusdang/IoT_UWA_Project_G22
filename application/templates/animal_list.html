@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Animal List</h1>
+    <table class="table table-dark">
+        <thead>
+            <tr>
+                <th scope="col">Animal Name</th>
+                <th scope="col">Animal Code</th>
+                <th scope="col">Remarks</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for animal in animals %}
+            <tr>
+                <td>{{ animal.name }}</td>
+                <td>{{ animal.code }}</td>
+                <td>{{ animal.remarks }}</td>
+                <td>{{ animal.owner.username }}</td>
+                <td>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#animalDetailModal{{ animal.id }}">
+                        View Details
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% for animal in animals %}
+<div class="modal fade" id="animalDetailModal{{ animal.id }}" tabindex="-1" aria-labelledby="animalDetailModalLabel{{ animal.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="animalDetailModalLabel{{ animal.id }}">Animal Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-body-content{{ animal.id }}">
+                    <p>Loading details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    {% for animal in animals %}
+    const animalId{{ animal.id }} = {{ animal.id }};
+    const modal{{ animal.id }} = document.getElementById('animalDetailModal{{ animal.id }}');
+    const modalBodyContent{{ animal.id }} = document.getElementById('modal-body-content{{ animal.id }}');
+
+    modal{{ animal.id }}.addEventListener('show.bs.modal', function (event) {
+        fetch(`/animal_detail/${animalId{{ animal.id }}}`)
+            .then(response => response.json())
+            .then(data => {
+                modalBodyContent{{ animal.id }}.innerHTML = `
+                    <p><strong>Name:</strong> ${data.name}</p>
+                    <p><strong>Code:</strong> ${data.code}</p>
+                    <p><strong>Owner:</strong> ${data.owner.username}</p>
+                    <p><strong>Remarks:</strong> ${data.remarks}</p>
+                `;
+            })
+            .catch(error => {
+                modalBodyContent{{ animal.id }}.innerHTML = `<p>Error loading details.</p>`;
+            });
+    });
+    {% endfor %}
+});
+</script>
+{% endblock %}

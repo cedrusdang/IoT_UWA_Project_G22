@@ -1,0 +1,72 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+<script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCkVDYWK6leViH9msDiR2wvVcn6w9ymyyM&loading=async&libraries=visualization&callback=initMap">
+</script>
+
+<div id="map"></div>
+<script>
+  let map;
+
+  // Function to read a specific cookie by name
+  function getCookie(name) {
+    let cookieArr = document.cookie.split(";");  // Split cookies into an array
+    
+    for (let i = 0; i < cookieArr.length; i++) {
+      let cookiePair = cookieArr[i].split("=");  // Split each cookie into key and value
+      
+      // Remove whitespace and compare the key with the provided cookie name
+      if (name == cookiePair[0].trim()) {
+        // Decode the cookie value and parse it as JSON
+        return JSON.parse(decodeURIComponent(cookiePair[1]));
+      }
+    }
+    
+    return null;  // Return null if the cookie is not found
+  }
+
+  // Initialize the Google Map
+  function initMap() {
+    // Define the map centered around Perth, WA
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: -31.9523, lng: 115.8613 },  // Latitude and longitude of Perth
+      zoom: 12,  // Zoom level
+      mapTypeId: google.maps.MapTypeId.HYBRID,  // Map type (hybrid includes satellite and roads)
+    });
+
+    // Fetch the livestock data from the 'livestock' cookie
+    const livestockData = getCookie('livestock');
+
+    // Initialize an array to store the heatmap data
+    let heatMapData = [];
+
+    // If livestock data exists in the cookie
+    if (livestockData) {
+      // Loop through each livestock item
+      livestockData.forEach((item) => {
+        // Create a LatLng object for the livestock's location
+        let latLng = new google.maps.LatLng(item.Lat, item.Lon);
+
+        // Optionally, weight the heatmap points based on speed
+        let point = { location: latLng, weight: item.speed };
+
+        // Add the point to the heatMapData array
+        heatMapData.push(point);
+      });
+    }
+
+    // Create a heatmap layer using the data from heatMapData
+    let heatmap = new google.maps.visualization.HeatmapLayer({
+      data: heatMapData,  // Set the heatmap data
+    });
+
+    // Add the heatmap layer to the map
+    heatmap.setMap(map);
+  }
+
+  // Initialize the map when the window loads
+  window.onload = initMap;
+</script>
+
+{% endblock %}
