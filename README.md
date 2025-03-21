@@ -1,1 +1,1 @@
-[![Visit Site](https://img.shields.io/badge/Live%20Site-Visit-brightgreen)](https://example.com)
+[![PDF](https://img.shields.io/badge/PDF-Presentation-blue)](./Group_22_Smart_Livestock_Tracking_System.pdf)
