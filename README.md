@@ -1,1 +1,1 @@
-[📄 Presentation – Smart Livestock Tracking System](./Group_22_Smart_Livestock_Tracking_System.pdf)
+[![Visit Site](https://img.shields.io/badge/Live%20Site-Visit-brightgreen)](https://example.com)
