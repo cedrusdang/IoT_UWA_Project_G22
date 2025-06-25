@@ -25,8 +25,15 @@ LoRa, MQTT, AWS Cloud, ESP32, Python Flask, Bootstrap, Google Maps API, Plotly
 ### Project Images
 
 ![](./iotproject1.png)
+
 ![](./iotproject2.png)
+
 ![](./iotproject3.png)
+
 ![](./iotproject4.png)
+
 ![](./iotproject5.png)
 
+### Contributors
+
+Cedrus Dang, Ella Zhang, Faraz Khan, Yifan Lu, Yapei Chen.
